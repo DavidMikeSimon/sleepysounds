@@ -49,13 +49,37 @@ sound_switch_value = '{"action":"off"}'
 volume_value = 100
 play_sound_value = 'Noise 4'
 sound_dictionary = {'Noise 4': '/home/pi/server/sounds/white-noise-4.mp3',
+                    'Heater 1': '/home/pi/server/sounds/heater-1.mp3',
+                    'Heater 2': '/home/pi/server/sounds/heater-2.mp3',
+                    'Motor': '/home/pi/server/sounds/motor.mp3',
+                    'Dryer 1': '/home/pi/server/sounds/dryer-1.mp3',
                     'Dryer 2': '/home/pi/server/sounds/dryer-2.mp3',
+                    'Fan 1': '/home/pi/server/sounds/fan-1.mp3',
                     'Fan 2': '/home/pi/server/sounds/fan-2.mp3',
-                    'Train 1': 'home/pi/server/sounds/train-1.mp3',
+                    'Ocean 1': '/home/pi/server/sounds/ocean-1.mp3',
+                    'Ocean 2': '/home/pi/server/sounds/ocean-2.mp3',
+                    'Ocean 3': '/home/pi/server/sounds/ocean-3.mp3',
+                    'Ocean 4': '/home/pi/server/sounds/ocean-4.mp3',
+                    'Pink Noise': '/home/pi/server/sounds/pink-noise.mp3', 
+                    'Train 1': '/home/pi/server/sounds/train-1.mp3',
+                    'Train 2': '/home/pi/server/sounds/train-2.mp3',
+                    'Storm': '/home/pi/server/sounds/storm.mp3', 
+                    'Stream 1': '/home/pi/server/sounds/stream-1.mp3',
+                    'Stream 2': '/home/pi/server/sounds/stream-2.mp3',
+                    'Blender 1': '/home/pi/server/sounds/blender-1.mp3',
+                    'Blender 2': '/home/pi/server/sounds/blender-2.mp3',
+                    'Waves 1': '/home/pi/server/sounds/waves-1.mp3',
+                    'Waves 2': '/home/pi/server/sounds/waves-2.mp3',
                     'Rain 1': '/home/pi/server/sounds/rain-1.mp3',
                     'Rain 2': '/home/pi/server/sounds/rain-2.mp3',
                     'Rain 3': '/home/pi/server/sounds/rain-3.mp3',
-                    'Rain 4': '/home/pi/server/sounds/rain-4.mp3'}
+                    'Rain 4': '/home/pi/server/sounds/rain-4.mp3',
+                    'White Noise 1': '/home/pi/server/sounds/white-noise-1.mp3',
+                    'White Noise 2': '/home/pi/server/sounds/white-noise-2.mp3',
+                    'White Noise 3': '/home/pi/server/sounds/white-noise-3.mp3',
+                    'White Noise 4': '/home/pi/server/sounds/white-noise-4.mp3',
+                    'White Noise 5': '/home/pi/server/sounds/white-noise-5.mp3',
+                    'White Noise 6': '/home/pi/server/sounds/white-noise-6.mp3'}
 
 # array containing topics to subscribe to
 allTopics = [light_topic, rgb_topic, sound_topic, play_sound_topic,
@@ -190,11 +214,14 @@ def handle_volume_mute_request():
 
 def handle_set_play_sound_request(payload):
     global play_sound_value
-    if payload == play_sound_value:
+    val = json.loads(payload)
+    sound_name = val["action"]
+    if sound_name == play_sound_value:
         return
     else:
         stop_sound()
-        play_sound_value = payload
+        play_sound_value = sound_name
+        play_sound(sound_dictionary[play_sound_value])
     handle_whitenoise_sound_state_request()
 
 
