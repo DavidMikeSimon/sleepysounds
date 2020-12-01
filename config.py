@@ -1,15 +1,11 @@
 # define the clientId
-clientId = 'client-id-1'
+clientId = 'baby-nightlight'
 
 # define connection parameters to MQTT server
 mqttHost = '192.168.1.100'
 mqttKeepAlive = 120
-
-# define program parameters
-# how old of a message will we still accept and process (in seconds)?
-maxMessageSkewTime = 30
-# how long does the garage take to fully open or close (in seconds)?
-garageActionTime = 2
+mqttPort = 8883
+unitTopic = 'babyverse'
 
 # define the path to the certificates
 # certFilePath = 'certs/yourCertificateFileName.pem'

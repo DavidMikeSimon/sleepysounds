@@ -4,50 +4,58 @@ import config
 import json
 import time
 import math
+import sqlite3
+import paho.mqtt.client as mqtt
 from decimal import Decimal
 from time import mktime
 from datetime import datetime
 from lib.nightlight.control import nightlight_set, nightlight_on, nightlight_off
 from lib.mixer.control import change_volume
 from lib.sound.control import play_sound, stop_sound
-import paho.mqtt.client as mqtt
+
+class UnitStatus:
+   'Common base class for all settings'
+   def __init__(self, light_status, rgb_setting, rgb_brightness, sound_status, sound_setting, volume_setting):
+        self.lightStatus = light_status
+        self.rgbSetting = rgb_setting
+        self.rgbBrightness = rgb_brightness
+        self.soundStatus = sound_status
+        self.soundSetting = sound_setting
+        self.volumeSetting = volume_setting
 
 # sleep for 1 minute to ensure we have network connectivity on reboot of the Pi, since this is run as a startup script
 # TODO: try to make this BETTER than this ugly hack in the future
-time.sleep(5)
+time.sleep(60)
 
 # define the topics to subscribe to
-light_topic = '/nightlight/light/set'
-rgb_topic = '/nightlight/light/rgb/set'
-brightness_topic = '/nightlight/light/brightness/set'
-sound_topic = '/nightlight/sound/set'
-volume_topic = '/nightlight/sound/volume/set'
-volume_up_topic = '/nightlight/sound/volume/up/set'
-volume_down_topic = '/nightlight/sound/volume/down/set'
-volume_mute_topic = '/nightlight/sound/volume/mute/set'
-play_sound_topic = '/nightlight/sound/play_sound/set'
-play_next_sound_topic = '/nightlight/sound/play_sound/next/set'
-play_previous_sound_topic = '/nightlight/sound/play_sound/previous/set'
+light_topic = '/'+config.unitTopic+'/'+config.clientId+'/nightlight/set'
+rgb_topic = '/'+config.unitTopic+'/'+config.clientId+'/nightlight/rgb/set'
+brightness_topic = '/'+config.unitTopic+'/'+config.clientId+'/nightlight/brightness/set'
+sound_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/set'
+volume_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/volume/set'
+volume_up_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/volume/up/set'
+volume_down_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/volume/down/set'
+volume_mute_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/volume/mute/set'
+play_sound_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/play_sound/set'
+play_next_sound_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/play_sound/next/set'
+play_previous_sound_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/play_sound/previous/set'
 
 # define the topics to publish state and information to
-light_state_topic = '/nightlight/light/state'
-brightness_state_topic = '/nightlight/light/brightness/state'
-rgb_state_topic = '/nightlight/light/rgb/state'
-sound_state_topic = '/nightlight/sound/state'
-sound_playlist_topic = '/nightlight/sound/playlist'
-volume_state_topic = '/nightlight/sound/volume/state'
-play_sound_state_topic = '/nightlight/sound/play_sound/state'
-previous_sound_state_topic = '/nightlight/sound/play_sound/previous/state'
-next_sound_state_topic = '/nightlight/sound/play_sound/next/state'
-
+light_state_topic = '/'+config.unitTopic+'/'+config.clientId+'/nightlight/state'
+brightness_state_topic = '/'+config.unitTopic+'/'+config.clientId+'/nightlight/brightness/state'
+rgb_state_topic = '/'+config.unitTopic+'/'+config.clientId+'/nightlight/rgb/state'
+sound_state_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/state'
+sound_playlist_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/playlist'
+volume_state_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/volume/state'
+play_sound_state_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/play_sound/state'
+previous_sound_state_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/play_sound/previous/state'
+next_sound_state_topic = '/'+config.unitTopic+'/'+config.clientId+'/whitenoise/play_sound/next/state'
+status_topic = '/'+config.unitTopic+'/'+config.clientId+'/state'
 
 # global variables
-light_switch_value = '{"action":"off"}'
-rgb_value = '{"r":255,"g":0,"b": 200}'
-brightness_value = 1
-sound_switch_value = '{"action":"off"}'
-volume_value = 100
-play_sound_value = 'Noise 4'
+global_status = UnitStatus("off",{"r":255,"g":0,"b":200},1,"off","Noise 4",100)
+# default sounds dictionary
+
 sound_dictionary = {'Noise 4': '/home/pi/server/sounds/white-noise-4.mp3',
                     'Heater 1': '/home/pi/server/sounds/heater-1.mp3',
                     'Heater 2': '/home/pi/server/sounds/heater-2.mp3',
@@ -87,20 +95,16 @@ allTopics = [light_topic, rgb_topic, sound_topic, play_sound_topic,
 
 # The callback for when the client receives a CONNACK response from the server.
 
-
 def on_connect(client, userdata, flags, rc):
     print('Connected with result code: ' + str(rc))
     print(allTopics)
     for topic in allTopics:
         client.subscribe(topic)
         print('subscribed to topic => ' + topic)
+    handle_status()
 
 # The callback for when a PUBLISH message is received from the server.
-
-
 def on_message_received(client, userdata, msg):
-    # print('Topic: [' + msg.topic + "] - Payload: [" + msg.payload + "]")
-
     if msg.topic == light_topic:
         handle_set_light_request(payload=msg.payload)
     elif msg.topic == brightness_topic:
@@ -129,28 +133,30 @@ def on_message_received(client, userdata, msg):
 # State publish section
 # -------------------------------------------------------------------------------------------------------------
 
+def handle_status():
+    client.publish(status_topic, json.dumps(global_status), 0, False)
 
 def handle_nightlight_switch_state_request():
-    client.publish(light_state_topic, light_switch_value, 0, False)
+    client.publish(light_state_topic, global_status.lightStatus, 0, False)
 
 def handle_nightlight_color_state_request():
-    client.publish(rgb_state_topic, rgb_value, 0, False)
+    client.publish(rgb_state_topic, json.dumps(global_status.rgbSetting), 0, False)
 
 
 def handle_nightlight_brightness_state_request():
-    client.publish(brightness_state_topic, brightness_value, 0, False)
+    client.publish(brightness_state_topic, global_status.rgbBrightness, 0, False)
 
 
 def handle_whitenoise_volume_state_request():
-    client.publish(volume_state_topic, volume_value, 0, False)
+    client.publish(volume_state_topic, json.dumps(global_status.volumeSetting), 0, False)
 
 
 def handle_whitenoise_sound_state_request():
-    client.publish(play_sound_state_topic, play_sound_value, 0, False)
+    client.publish(play_sound_state_topic, json.dumps(global_status.soundSetting), 0, False)
 
 
 def handle_whitenoise_switch_state_request():
-    client.publish(sound_state_topic, sound_switch_value, 0, False)
+    client.publish(sound_state_topic, json.dumps(global_status.soundStatus), 0, False)
     client.publish(sound_playlist_topic, json.dumps(sound_dictionary), 0, False)
 
 
@@ -165,47 +171,41 @@ def handle_previous_next_state_request(newPrevious, newNext, newCurrent):
 
 
 def handle_set_play_next_request():
-    global play_sound_value
     keyList = sorted(sound_dictionary.keys())
     for i, v in enumerate(keyList):
-        if v == play_sound_value:
+        if v == global_status.soundSetting:
             handle_previous_next_state_request(keyList[i], keyList[i+2], keyList[i+1])
-            play_sound_value = keyList[i+1]
+            global_status.soundSetting = keyList[i+1]
             stop_sound()
-            play_sound(sound_dictionary[play_sound_value])
-            change_volume(volume_value)
+            play_sound(sound_dictionary[global_status.soundSetting])
+            change_volume(global_status.volumeSetting)
     handle_whitenoise_sound_state_request()
 
 
 def handle_set_play_previous_request():
-    global play_sound_value
     keyList = sorted(sound_dictionary.keys())
     for i, v in enumerate(keyList):
-        if v == play_sound_value:
+        if v == global_status.soundSetting:
             handle_previous_next_state_request(keyList[i-2], keyList[i], keyList[i-1])
-            play_sound_value = keyList[i-1]
+            global_status.soundSetting = keyList[i-1]
             stop_sound()
-            play_sound(sound_dictionary[play_sound_value])
-            change_volume(volume_value)
+            play_sound(sound_dictionary[global_status.soundSetting])
+            change_volume(global_status.volumeSetting)
     handle_whitenoise_sound_state_request()
 
 
 def handle_set_volume_request(payload):
-    global volume_value
-    if payload == volume_value:
-        return
-    else:
-        volume_value = int(Decimal(json.loads(payload)) * 100)
-        change_volume(volume_value)
+    global_status.volumeSetting = int(Decimal(json.loads(payload)) * 100)
+    change_volume(global_status.volumeSetting)
     handle_whitenoise_volume_state_request()
 
 
 def handle_volume_up_request():
-    change_volume((volume_value+5))
+    change_volume((global_status.volumeSetting+5))
 
 
 def handle_volume_down_request():
-    change_volume((volume_value-5))
+    change_volume((global_status.volumeSetting-5))
 
 
 def handle_volume_mute_request():
@@ -213,29 +213,24 @@ def handle_volume_mute_request():
 
 
 def handle_set_play_sound_request(payload):
-    global play_sound_value
     val = json.loads(payload)
     sound_name = val["action"]
-    if sound_name == play_sound_value:
-        return
-    else:
-        stop_sound()
-        play_sound_value = sound_name
-        play_sound(sound_dictionary[play_sound_value])
+    stop_sound()
+    global_status.soundSetting = sound_name
+    play_sound(sound_dictionary[global_status.soundSetting])
     handle_whitenoise_sound_state_request()
 
 
 def handle_set_sound_request(payload):
-    global sound_switch_value
     jsonPayload = json.loads(payload)
     if jsonPayload["action"] == 'off':
-        sound_switch_value = '{"action":"off"}'
         stop_sound()
+        global_status.soundStatus = "off"
     else:
         stop_sound()
-        sound_switch_value = '{"action":"on"}'
-        play_sound(sound_dictionary[play_sound_value])
-        change_volume(volume_value)
+        play_sound(sound_dictionary[global_status.soundSetting])
+        global_status.soundStatus = "on"
+        change_volume(global_status.volumeSetting)
     handle_whitenoise_switch_state_request()
 
 # -------------------------------------------------------------------------------------------------------------
@@ -244,48 +239,41 @@ def handle_set_sound_request(payload):
 
 
 def handle_set_brightness_request(payload):
-    global brightness_value
-    if payload == brightness_value:
-        return
-    else:
-        brightness_value = payload
-        handle_nightlight_brightness_state_request
+    global_status.rgbBrightness = payload
+    handle_nightlight_brightness_state_request()
 
 
 def handle_set_light_request(payload):
-    global light_switch_value
     jsonPayload = json.loads(payload)
     if jsonPayload["action"] == 'off':
-        light_switch_value = '{"action":"off"}'
         nightlight_set(0, 0, 0, 0.5)
         nightlight_on()
         nightlight_off()
+        global_status.lightStatus = 'off'
     else:
         nightlight_off()
-        light_switch_value = '{"action":"on"}'
-        jsonPayload = json.loads(rgb_value)
-        nightlight_set(red=jsonPayload["r"], green=jsonPayload["g"],
-                       blue=jsonPayload["b"], brightness=brightness_value)
+        nightlight_set(red=global_status.rgbSetting.red, green=global_status.rgbSetting.green,
+                       blue=global_status.rgbSetting.blue, brightness=global_status.rgbBrightness)
         nightlight_on()
+        global_status.lightStatus = "on"
     handle_nightlight_switch_state_request()
 
 
 def handle_set_rgb_request(payload):
-    global rgb_value
-    if payload == rgb_value:
-        return
-    else:
-        rgb_value = payload
-    handle_nightlight_color_state_request
+    jsonPayload = json.loads(payload)
+    global_status.rgbSetting.red=jsonPayload["r"]
+    global_status.rgbSetting.green=jsonPayload["g"]
+    global_status.rgbSetting.blue=jsonPayload["b"],
+    handle_nightlight_color_state_request()
 
 # -------------------------------------------------------------------------------------------------------------
 
 
-client = mqtt.Client('baby-nightlight')
+client = mqtt.Client(client_id=config.clientId)
 
 #client.tls_set(ca_certs=config.caBundlePath, certfile=config.certFilePath, keyfile=config.keyFilePath)
 #client.username_pw_set(config.username, config.password)
-client.connect('192.168.1.100')
+client.connect(config.mqttHost, config.mqttPort, config.mqttKeepAlive)
 
 client.on_connect = on_connect
 client.on_message = on_message_received
