@@ -19,7 +19,7 @@ def save_nightlight(conn, data):
     """
     Save new nightlight config
     :param conn:
-    :param task:
+    :param data:
     :return:
     """
 
@@ -49,6 +49,12 @@ def select_all_nightlight_configs(conn):
     return rows
 
 def nightlight_delete(conn, light_id):
+    """
+    Delete specific rows in the nightlight table
+    :param conn: the Connection object
+    :param light_id: the nightlight config id
+    :return:
+    """
     params = {'id': light_id}
     query = 'SELECT count(*) FROM nightlight WHERE light.id = :id'
     cur = conn.cursor()
@@ -67,6 +73,7 @@ def nightlight_delete(conn, light_id):
 def delete_all_nightlights(conn):
     """
     Delete all rows in the nightlight table
+    :param conn: the Connection object
     :return:
     """
     sql = 'DELETE FROM nightlight'
@@ -105,6 +112,12 @@ def select_all_sounds(conn):
     return rows
 
 def sound_delete(conn, sound_id):
+    """
+    Delete specific rows in the sounds table
+    :param conn: the Connection object
+    :param light_id: the sound config id
+    :return:
+    """
     params = {'id': sound_id}
     query = 'SELECT count(*) FROM sounds WHERE sounds.id = :id'
     cur = conn.cursor()
@@ -123,6 +136,7 @@ def sound_delete(conn, sound_id):
 def delete_all_sounds(conn):
     """
     Delete all rows in the sounds table
+    :param conn: the Connection object
     :return:
     """
     sql = 'DELETE FROM sounds'
