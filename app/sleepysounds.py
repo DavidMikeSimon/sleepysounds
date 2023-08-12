@@ -176,7 +176,6 @@ def handle_set_sound_request(payload):
 def main():
     playback.load_file(os.path.join(config.soundsDir, list(sound_dictionary.values())[0]))
     playback.play()
-    playback.seek(255)
 
     while True:
         time.sleep(2)
