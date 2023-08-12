@@ -1,2 +1,3 @@
-# mqtt_bnam
-MQTT Controlled Baby Nightlight/Whitenoise Maker
+# sleepysounds
+
+Based on https://github.com/adodado/mqtt_bnam
