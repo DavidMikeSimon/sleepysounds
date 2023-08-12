@@ -1,5 +1,7 @@
 FROM python:3
 
+RUN apt update && apt install -y alsa-utils && apt clean
+
 COPY app /usr/src/app
 
 WORKDIR /usr/src/app
