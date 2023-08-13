@@ -2,7 +2,8 @@ FROM python:3
 
 RUN apt update && apt install -y alsa-utils && apt clean
 
-RUN pip install --no-cache-dir -r ./app/requirements.txt
+COPY requirements.txt /tmp
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY app /usr/src/app
 
