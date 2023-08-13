@@ -1,2 +1,2 @@
-paho-mqtt==1.5.0
+ha-mqtt-discoverable==0.9.0
 just_playback==0.1.7

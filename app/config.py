@@ -1,13 +1,8 @@
 import os
 
-soundsDir = os.environ['SOUNDS_DIR']
+name_prefix = os.environ['NAME_PREFIX']
+sounds_dir = os.environ['SOUNDS_DIR']
 
-clientId = os.environ['CLIENT_ID']
-
-mqttHost = os.environ['MQTT_HOST']
-mqttKeepAlive = 120
-mqttPort = 8883
-unitTopic = os.environ['UNIT_TOPIC']
-
+mqtt_host = os.environ['MQTT_HOST']
 username = os.environ['MQTT_USER']
 password = os.environ['MQTT_PASS']
