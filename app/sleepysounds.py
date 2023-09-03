@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import os
+import signal
+import sys
 import time
 
 from ha_mqtt_discoverable import DeviceInfo, Settings
@@ -70,9 +72,14 @@ next_button = Button(next_button_settings, next_button_request)
 # FIXME: This should happen automatically
 next_button.write_config()
 
+def handle_interrupt(signum, frame):
+    print("Received SIGINT, exiting")
+    sys.exit(0)
+
 
 def main():
     load_current_sound()
+    signal.signal(signal.SIGINT, handle_interrupt)
 
     while True:
         time.sleep(10)
