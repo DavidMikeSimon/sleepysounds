@@ -75,7 +75,7 @@ next_button.write_config()
 def handle_interrupt(signum, frame):
     print("Received SIGINT, exiting")
     playback_command_queue.put(QuitCommand())
-    playback_thread.join()
+    playback_thread.join(timeout=2.0)
     sys.exit(0)
 
 
