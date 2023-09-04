@@ -1,4 +1,4 @@
-FROM python:3.11.5-slim
+FROM python:3.11.5
 
 RUN apt update && apt install -y alsa-utils && apt clean
 
