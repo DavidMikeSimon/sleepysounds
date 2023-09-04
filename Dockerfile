@@ -9,4 +9,4 @@ COPY app /usr/src/app
 
 WORKDIR /usr/src/app
 
-CMD [ "python", "./sleepysounds.py" ]
+CMD [ "python", "-u", "./sleepysounds.py" ]
