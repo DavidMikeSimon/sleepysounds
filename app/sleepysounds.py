@@ -92,21 +92,22 @@ next_button = Button(next_button_settings, next_button_request)
 # FIXME: This should happen automatically
 next_button.write_config()
 
-received_sigint = False
-def handle_interrupt(signum, frame):
-    global received_sigint
-    if received_sigint:
-        logging.warning("Received second SIGINT, quitting hard")
+received_terminate_signal = False
+def handle_terminate_signal(signum, frame):
+    global received_terminate_signal
+    if received_terminate_signal:
+        logging.warning(f"Received second terminate signal {signum}, quitting hard")
         sys.exit(1)
 
-    logging.info("Received SIGINT")
-    received_sigint = True
+    logging.info(f"Received terminate signal {signum}")
+    received_terminate_signal = True
     playback_command_queue.put(QuitCommand())
 
 
 def main():
     playback_thread.start()
-    signal.signal(signal.SIGINT, handle_interrupt)
+    signal.signal(signal.SIGINT, handle_terminate_signal)
+    signal.signal(signal.SIGTERM, handle_terminate_signal)
 
     while True:
         status_message = playback_status_queue.get()
