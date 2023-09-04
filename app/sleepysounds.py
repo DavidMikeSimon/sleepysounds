@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import logging
 import os
 import signal
 import sys
@@ -54,7 +55,7 @@ def switch_change_request(client, user_data, message):
     elif payload == "OFF":
         playback_command_queue.put(StopCommand())
     else:
-        print(f"Unknown payload {payload} in switch_change_request")
+        logging.error(f"Unknown payload {payload} in switch_change_request")
 
 
 playing_switch_info = SwitchInfo(
@@ -95,10 +96,10 @@ received_sigint = False
 def handle_interrupt(signum, frame):
     global received_sigint
     if received_sigint:
-        print("Received second SIGINT, quitting hard")
+        logging.warning("Received second SIGINT, quitting hard")
         sys.exit(1)
 
-    print("Received SIGINT")
+    logging.info("Received SIGINT")
     received_sigint = True
     playback_command_queue.put(QuitCommand())
 
@@ -111,13 +112,13 @@ def main():
         status_message = playback_status_queue.get()
         match status_message:
             case PlaybackStartingMessage(path):
-                print(f"Playback starting: {path}")
+                logging.info(f"Playback starting: {path}")
                 playing_switch.on()
             case PlaybackStoppingMessage():
-                print("Playback stopping")
+                logging.info("Playback stopping")
                 playing_switch.off()
             case PlaybackThreadEndedMessage():
-                print("Playback thread ended")
+                logging.info("Playback thread ended")
                 return
 
 
