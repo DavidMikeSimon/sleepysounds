@@ -86,9 +86,12 @@ playing_switch.off()
 VOLUME_PATTERN = re.compile(b'.+\[(\d+)%', re.DOTALL)
 def get_current_volume_percentage() -> int:
     proc = subprocess.run(["amixer", "-M"], capture_output=True, check=True)
-    return int(re.match(VOLUME_PATTERN, proc.stdout).group(1))
+    volume = int(re.match(VOLUME_PATTERN, proc.stdout).group(1)) 
+    logging.info(f"Initial volume: {volume}%")
+    return volume
 
 def set_current_volume_percentage(value: int):
+    logging.info(f"Setting volume: {value}%")
     subprocess.run(["amixer", "-M", "sset", "PCM", f"{value}%"])
 
 def volume_change_request(client, user_data, message):
