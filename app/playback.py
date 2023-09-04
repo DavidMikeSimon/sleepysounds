@@ -36,7 +36,7 @@ PlaybackStatusMessage = PlaybackStartingMessage | PlaybackStoppingMessage | Play
 FADE_OUT_TIME = 1.0
 FADE_IN_TIME = 1.0
 FADE_STEPS = 50
-DELAY_TIME = 0.8
+DELAY_TIME = 0.2
 
 class PlaybackThread(Thread):
     _command_queue: Queue[PlaybackCommand]
