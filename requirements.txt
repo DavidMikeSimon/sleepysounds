@@ -1,3 +1,2 @@
 ha-mqtt-discoverable @ git+https://github.com/DavidMikeSimon/ha-mqtt-discoverable@main
 just_playback==0.1.7
-pyalsaaudio==0.10.0
