@@ -75,7 +75,7 @@ class PlaybackThread(Thread):
             self._playback.set_volume(1.0 - float(i)/FADE_STEPS)
             time.sleep(FADE_OUT_TIME / FADE_STEPS)
         time.sleep(DELAY_TIME)
-        self._playback.stop()
+        self._playback.pause()
         self._is_playing = False
 
     def _process_commands(self):
