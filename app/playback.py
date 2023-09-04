@@ -36,7 +36,7 @@ PlaybackStatusMessage = PlaybackStartingMessage | PlaybackStoppingMessage | Play
 FADE_OUT_TIME = 1.0
 FADE_IN_TIME = 1.0
 FADE_STEPS = 50
-POST_STOP_PLAYBACK_DELAY_TIME = 0.2
+DELAY_TIME = 0.2
 
 class PlaybackThread(Thread):
     _command_queue: Queue[PlaybackCommand]
@@ -61,6 +61,7 @@ class PlaybackThread(Thread):
         self._playback.load_file(path)
         self._playback.play()
         self._status_queue.put(PlaybackStartingMessage(path=path))
+        time.sleep(DELAY_TIME)
         for i in range(FADE_STEPS):
             self._playback.set_volume(float(i)/FADE_STEPS)
             time.sleep(FADE_IN_TIME / FADE_STEPS)
@@ -73,7 +74,7 @@ class PlaybackThread(Thread):
         for i in range(FADE_STEPS):
             self._playback.set_volume(1.0 - float(i)/FADE_STEPS)
             time.sleep(FADE_OUT_TIME / FADE_STEPS)
-        time.sleep(POST_STOP_PLAYBACK_DELAY_TIME)
+        time.sleep(DELAY_TIME)
         self._playback.stop()
         self._is_playing = False
 
