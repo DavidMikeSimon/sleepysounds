@@ -2,13 +2,22 @@
 
 import logging
 import os
+import re
 import signal
+import subprocess
 import sys
 import time
 from queue import Queue, SimpleQueue
 
 from ha_mqtt_discoverable import DeviceInfo, Settings
-from ha_mqtt_discoverable.sensors import Button, ButtonInfo, Switch, SwitchInfo
+from ha_mqtt_discoverable.sensors import (
+    Button,
+    ButtonInfo,
+    Number,
+    NumberInfo,
+    Switch,
+    SwitchInfo
+)
 
 import config
 from playback import (
@@ -73,6 +82,36 @@ playing_switch = Switch(playing_switch_settings, switch_change_request)
 # discovery message.
 playing_switch.off()
 
+
+VOLUME_PATTERN = r'\[(\d+)%\]'
+def get_current_volume_percentage() -> int:
+    proc = subprocess.run(["amixer", "-M"], capture_output=True, check=True)
+    return int(re.match(VOLUME_PATTERN, proc.stdout))
+
+def set_current_volume_percentage(value: int):
+    subprocess.run(["amixer", "-M", "sset", "PCM", f"{value}%"])
+
+def volume_change_request(client, user_data, message):
+    payload = int(message.payload.decode())
+    set_current_volume_percentage(payload)
+    volume_slider.set_value(payload)
+
+
+volume_slider_info = NumberInfo(
+    name=f"{device_name} Volume",
+    unique_id="{device_name}_volume",
+    mode="box",
+    min=0,
+    max=100,
+    step=1,
+    device=device_info
+)
+volume_slider_settings = Settings(
+    mqtt=mqtt_settings,
+    entity=volume_slider_info
+)
+volume_slider = Number(volume_slider_settings, volume_change_request)
+volume_slider.set_value(get_current_volume_percentage())
 
 def next_button_request(client, user_data, message):
     playback_command_queue.put(StopCommand())
