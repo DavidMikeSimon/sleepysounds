@@ -59,9 +59,9 @@ class PlaybackThread(Thread):
     def _start_playback(self, path: str):
         self._playback.set_volume(0.0)
         self._playback.load_file(path)
+        time.sleep(DELAY_TIME)
         self._playback.play()
         self._status_queue.put(PlaybackStartingMessage(path=path))
-        time.sleep(DELAY_TIME)
         for i in range(FADE_STEPS):
             self._playback.set_volume(float(i)/FADE_STEPS)
             time.sleep(FADE_IN_TIME / FADE_STEPS)
@@ -75,7 +75,7 @@ class PlaybackThread(Thread):
             self._playback.set_volume(1.0 - float(i)/FADE_STEPS)
             time.sleep(FADE_OUT_TIME / FADE_STEPS)
         time.sleep(DELAY_TIME)
-        self._playback.pause()
+        self._playback.stop()
         self._is_playing = False
 
     def _process_commands(self):
