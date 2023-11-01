@@ -1,11 +1,10 @@
 import os
 
-name_prefix = os.environ['NAME_PREFIX']
-sounds_dir = os.environ['SOUNDS_DIR']
+name_prefix = os.environ.get('NAME_PREFIX', os.uname().nodename)
+sounds_dir = os.environ.get('SOUNDS_DIR', '/sounds')
 
-mqtt_host = os.environ['MQTT_HOST']
-username = os.environ['MQTT_USER']
-password = os.environ['MQTT_PASS']
+mqtt_host = os.environ.get('MQTT_HOST', 'localhost')
+username = os.environ.get('MQTT_USER', '')
+password = os.environ.get('MQTT_PASS', '')
 
-alsa_card_num = os.environ['ALSA_CARD_NUM']
-alsa_control = os.environ['ALSA_CONTROL']
+alsa_control = os.environ.get('ALSA_CONTROL', 'PCM')

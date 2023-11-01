@@ -85,29 +85,18 @@ playing_switch.off()
 
 VOLUME_PATTERN = re.compile(b'.+\[(\d+)%', re.DOTALL)
 def get_current_volume_percentage() -> int:
-    proc = subprocess.run([
-        "amixer",
-        "-M",
-        "-c",
-        config.alsa_card_num,
-        "sget",
-        config.alsa_control
-    ], capture_output=True, check=True)
+    proc = subprocess.run(
+        ["amixer", "-M", "sget", config.alsa_control],
+        capture_output=True,
+        check=True
+    )
     volume = int(re.match(VOLUME_PATTERN, proc.stdout).group(1)) 
     logging.info(f"Initial volume: {volume}%")
     return volume
 
 def set_current_volume_percentage(value: int):
     logging.info(f"Setting volume: {value}%")
-    subprocess.run([
-        "amixer",
-        "-M",
-        "-c",
-        config.alsa_card_num,
-        "sset",
-        config.alsa_control,
-        f"{value}%"
-    ])
+    subprocess.run(["amixer", "-M", "sset", config.alsa_control, f"{value}%"])
 
 def volume_change_request(client, user_data, message):
     payload = int(message.payload.decode())
